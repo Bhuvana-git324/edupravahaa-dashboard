@@ -46,7 +46,7 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-            
+            step {
                 sh 'docker push $DOCKERHUB_USER/jkrepositary'
             }
         }
