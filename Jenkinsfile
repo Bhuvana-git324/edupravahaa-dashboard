@@ -35,7 +35,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKERHUB_USER/ept-dashboard .'
+                sh 'docker build -t $DOCKERHUB_USER/jkrepositary.'
             }
         }
 
@@ -47,7 +47,7 @@ pipeline {
 
         stage('Push Docker Image') {
             
-                sh 'docker push $DOCKERHUB_USER/bhauvana/jkrepositary'
+                sh 'docker push $DOCKERHUB_USER/jkrepositary'
             }
         }
 
