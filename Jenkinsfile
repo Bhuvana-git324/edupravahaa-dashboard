@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'jayakrishnagolla'
+        DOCKERHUB_USER = 'bhauvana'
         DOCKER_CREDS = credentials('DOCKER_HUB')
-        EMAIL_TO = 'gollajayakrishna775@gmail.com'
+        EMAIL_TO = 'bhuvaneswari.k002@gmail.com'
     }
 
     stages {
@@ -69,7 +69,7 @@ pipeline {
     post {
         success {
             emailext(
-                to: "gollajayakrishna775@gmail.com",
+                to: "kbhuvaneswari474@gmail.com",
                 subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                 <h2>Build Successful</h2>
@@ -82,7 +82,7 @@ pipeline {
 
         failure {
             emailext(
-                to: "gollajayakrishna775@gmail.com",
+                to: "kbhuvaneswari474@gmail.com",
                 subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                 <h2>Build Failed</h2>
