@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_USER = 'bhauvana'
+        IMAGE_NAME = 'jkrepositary'
         DOCKER_CREDS = credentials('DOCKER_HUB')
         EMAIL_TO = 'bhuvaneswari.k002@gmail.com'
     }
@@ -35,32 +36,38 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKERHUB_USER/jkrepositary.'
+                sh '''
+                  docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .
+                '''
             }
         }
 
         stage('Docker Login') {
             steps {
-                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                sh '''
+                  echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin
+                '''
             }
         }
 
         stage('Push Docker Image') {
-            step {
-                sh 'docker push $DOCKERHUB_USER/jkrepositary'
+            steps {
+                sh '''
+                  docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+                '''
             }
         }
 
         stage('Deploy on EC2') {
             steps {
                 sh '''
-                mkdir -p /var/lib/jenkins/deploy
-                cp docker-compose.yml /var/lib/jenkins/deploy/
+                  mkdir -p /var/lib/jenkins/deploy
+                  cp docker-compose.yml /var/lib/jenkins/deploy/
 
-                cd /var/lib/jenkins/deploy
-                docker-compose down || true
-                docker-compose pull
-                docker-compose up -d
+                  cd /var/lib/jenkins/deploy
+                  docker compose down || true
+                  docker compose pull
+                  docker compose up -d
                 '''
             }
         }
