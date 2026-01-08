@@ -37,41 +37,52 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build -t bhauvana/ept-dashboard:latest .
-                '''
+                sh """
+                    docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
+                """
             }
         }
 
         stage('Docker Login') {
             steps {
-                sh '''
+                sh """
                     echo "$DOCKER_CREDS_PSW" | docker login -u "$DOCKER_CREDS_USR" --password-stdin
-                '''
+                """
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh '''
-                    docker push bhauvana/ept-dashboard:latest
-                '''
+                sh """
+                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                """
             }
         }
 
         stage('Deploy on Application EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(
-                    credentialsId: 'EC2_SSH_KEY',
+                    credentialsId: 'EC2_SSH_KEY',   // Your Jenkins SSH key credential ID
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'SSH_USER'
                 )]) {
                     sh """
-                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@54.183.131.143 //
-                        'docker pull ${DOCKERHUB_USER}/ept-dashboard:latest; //
-                        docker stop ept-dashboard || true; //
-                        docker rm ept-dashboard || true; //
-                        docker run -d --name ept-dashboard -p 3000:80 ${DOCKERHUB_USER}/ept-dashboard:latest'          
+                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@${APP_EC2_IP} << 'ENDSSH'
+                        echo "Pulling latest Docker image..."
+                        docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+
+                        echo "Stopping and removing old container if exists..."
+                        docker stop ${IMAGE_NAME} || true
+                        docker rm ${IMAGE_NAME} || true
+
+                        echo "Running new container..."
+                        docker run -d \
+                          --name ${IMAGE_NAME} \
+                          -p 3000:80 \
+                          ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+
+                        echo "Deployment completed."
+                    ENDSSH
                     """
                 }
             }
@@ -81,7 +92,7 @@ pipeline {
     post {
         success {
             emailext(
-                to: "bhuvaneswari.k002@gmail.com",
+                to: "${EMAIL_TO}",
                 subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                 <h2>Build Successful</h2>
@@ -94,7 +105,7 @@ pipeline {
 
         failure {
             emailext(
-                to: "bhuvaneswari.k002@gmail.com",
+                to: "${EMAIL_TO}",
                 subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                 <h2>Build Failed</h2>
