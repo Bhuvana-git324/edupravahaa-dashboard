@@ -6,7 +6,7 @@ pipeline {
         IMAGE_NAME = 'ept-dashboard'
         DOCKER_CREDS = credentials('DOCKER_HUB')
         EMAIL_TO = 'bhuvaneswari.k002@gmail.com'
-        APP_EC2_IP = '40.192.119.196'
+        APP_EC2_IP = '54.183.131.143'
     }
 
     stages {
@@ -37,41 +37,41 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                    docker build -t ${DOCKERHUB_USER}/ept-dashboard:latest .
-                """
+                sh '''
+                    docker build -t bhauvana/ept-dashboard:latest .
+                '''
             }
         }
 
         stage('Docker Login') {
             steps {
-                sh """
-                    echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin
-                """
+                sh '''
+                    echo "$DOCKER_CREDS_PSW" | docker login -u "$DOCKER_CREDS_USR" --password-stdin
+                '''
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh """
-                    docker push ${DOCKERHUB_USER/ept-dashboard:latest'
-                """
+                sh '''
+                    docker push bhauvana/ept-dashboard:latest
+                '''
             }
         }
 
         stage('Deploy on Application EC2') {
             steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no ubuntu@ 54.183.131.143'
-                    docker pull ${DOCKERHUB_USER}/ept-dashboard:latest
-                    docker stop ept-dashboard|| true
-                    docker rm ept-dashboard|| true
+                sh '''
+                ssh -o StrictHostKeyChecking=no ubuntu@54.183.131.143 << EOF
+                    docker pull bhauvana/ept-dashboard:latest
+                    docker stop ept-dashboard || true
+                    docker rm ept-dashboard || true
                     docker run -d \
-                        --name ept-dashboard \
-                        -p 3000:80 \
-                        ${DOCKERHUB_USER}/ept-dashboard:latest
-                '
-                """
+                      --name ept-dashboard \
+                      -p 3000:80 \
+                      bhauvana/ept-dashboard:latest
+                EOF
+                '''
             }
         }
     }
@@ -79,7 +79,7 @@ pipeline {
     post {
         success {
             emailext(
-                to: "kbhuvaneswari474@gmail.com",
+                to: "bhuvaneswari.k002@gmail.com",
                 subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                 <h2>Build Successful</h2>
@@ -92,7 +92,7 @@ pipeline {
 
         failure {
             emailext(
-                to: "kbhuvaneswari474@gmail.com",
+                to: "bhuvaneswari.k002@gmail.com",
                 subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                 <h2>Build Failed</h2>
@@ -104,4 +104,5 @@ pipeline {
         }
     }
 }
+
 
