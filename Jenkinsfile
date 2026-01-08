@@ -60,33 +60,38 @@ pipeline {
         }
 
         stage('Deploy on Application EC2') {
-            steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'EC2_SSH_KEY',   // Your Jenkins SSH key credential ID
-                    keyFileVariable: 'SSH_KEY',
-                    usernameVariable: 'SSH_USER'
-                )]) {
-                    sh """
-                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@${APP_EC2_IP} << 'ENDSSH'
-                        echo "Pulling latest Docker image..."
-                        docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+    steps {
+        withCredentials([sshUserPrivateKey(
+            credentialsId: 'EC2_SSH_KEY',
+            keyFileVariable: 'SSH_KEY',
+            usernameVariable: 'SSH_USER'
+        )]) {
+            sh '''
+            ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@${APP_EC2_IP} << 'ENDSSH'
+            set -e  # Exit if any command fails
+            echo "Pulling latest Docker image..."
+            docker pull bhauvana/ept-dashboard:latest
 
-                        echo "Stopping and removing old container if exists..."
-                        docker stop ${IMAGE_NAME} || true
-                        docker rm ${IMAGE_NAME} || true
+            if [ "$(docker ps -q -f name=ept-dashboard)" ]; then
+                echo "Stopping running container..."
+                docker stop ept-dashboard
+            fi
 
-                        echo "Running new container..."
-                        docker run -d \
-                          --name ${IMAGE_NAME} \
-                          -p 3000:80 \
-                          ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+            if [ "$(docker ps -aq -f name=ept-dashboard)" ]; then
+                echo "Removing old container..."
+                docker rm ept-dashboard
+            fi
 
-                        echo "Deployment completed."
-                    ENDSSH
-                    """
-                }
-            }
+            echo "Starting container..."
+            docker run -d --name ept-dashboard -p 3000:80 bhauvana/ept-dashboard:latest
+
+            echo "Deployment completed successfully."
+            ENDSSH
+            '''
         }
+    }
+}
+
     }
 
     post {
