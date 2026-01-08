@@ -86,7 +86,7 @@ pipeline {
             docker run -d --name ept-dashboard -p 3000:80 bhauvana/ept-dashboard:latest
 
             echo "Deployment completed successfully."
-            ENDSSH
+            
             '''
         }
     }
