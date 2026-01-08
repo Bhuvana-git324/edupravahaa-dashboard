@@ -58,29 +58,29 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Deploy on Application EC2') {
             steps {
-                 withCredentials([sshUserPrivateKey(
+                withCredentials([sshUserPrivateKey(
                     credentialsId: 'EC2_SSH_KEY',
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'SSH_USER'
-            )]) {
-                sh '''
-                ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@54.183.131.143 << EOF
-                docker pull ${DOCKERHUB_USER}/ept-dashboard:latest
-                docker stop ept-dashboard || true
-                docker rm ept-dashboard || true
-                docker run -d \
-                  --name ept-dashboard \
-                  -p 3000:80 \
-                  ${DOCKERHUB_USER}/ept-dashboard:latest
-            EOF
-            '''
+                )]) {
+                    sh '''
+                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@54.183.131.143 << EOF
+                        docker pull ${DOCKERHUB_USER}/ept-dashboard:latest
+                        docker stop ept-dashboard || true
+                        docker rm ept-dashboard || true
+                        docker run -d \
+                          --name ept-dashboard \
+                          -p 3000:80 \
+                          ${DOCKERHUB_USER}/ept-dashboard:latest
+                    EOF
+                    '''
+                }
+            }
         }
     }
-}
-
 
     post {
         success {
@@ -110,5 +110,3 @@ pipeline {
         }
     }
 }
-
-
