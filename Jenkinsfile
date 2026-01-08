@@ -3,9 +3,10 @@ pipeline {
 
     environment {
         DOCKERHUB_USER = 'bhauvana'
-        IMAGE_NAME = 'jkrepositary'
+        IMAGE_NAME = 'ept-dashboard'
         DOCKER_CREDS = credentials('DOCKER_HUB')
         EMAIL_TO = 'bhuvaneswari.k002@gmail.com'
+        APP_EC2_IP = '40.192.119.196'
     }
 
     stages {
@@ -36,39 +37,41 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                  docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .
-                '''
+                sh """
+                    docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
+                """
             }
         }
 
         stage('Docker Login') {
             steps {
-                sh '''
-                  echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin
-                '''
+                sh """
+                    echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin
+                """
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh '''
-                  docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
-                '''
+                sh """
+                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                """
             }
         }
 
-        stage('Deploy on EC2') {
+        stage('Deploy on Application EC2') {
             steps {
-                sh '''
-                  mkdir -p /var/lib/jenkins/deploy
-                  cp docker-compose.yml /var/lib/jenkins/deploy/
-
-                  cd /var/lib/jenkins/deploy
-                  docker compose down || true
-                  docker compose pull
-                  docker compose up -d
-                '''
+                sh """
+                ssh -o StrictHostKeyChecking=no ubuntu@ 54.183.131.143'
+                    docker pull ${DOCKERHUB_USER}/${jk}:latest
+                    docker stop jk|| true
+                    docker rm jk || true
+                    docker run -d \
+                        --name jk \
+                        -p 3000:80 \
+                        ${DOCKERHUB_USER}/jk:latest
+                '
+                """
             }
         }
     }
@@ -101,3 +104,4 @@ pipeline {
         }
     }
 }
+
