@@ -63,13 +63,13 @@ pipeline {
             steps {
                 sh """
                 ssh -o StrictHostKeyChecking=no ubuntu@ 54.183.131.143'
-                    docker pull ${DOCKERHUB_USER}/mani:latest
-                    docker stop mani|| true
-                    docker rm mani|| true
+                    docker pull ${DOCKERHUB_USER}/ept-dashboard:latest
+                    docker stop ept-dashboard|| true
+                    docker rm ept-dashboard|| true
                     docker run -d \
                         --name jk \
                         -p 3000:80 \
-                        ${DOCKERHUB_USER}/jk:latest
+                        ${DOCKERHUB_USER}/ept-dashboard:latest
                 '
                 """
             }
