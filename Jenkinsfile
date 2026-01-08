@@ -38,7 +38,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh """
-                    docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
+                    docker build -t ${DOCKERHUB_USER}/ept-dashboard:latest .
                 """
             }
         }
@@ -54,7 +54,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 sh """
-                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                    docker push ${DOCKERHUB_USER/ept-dashboard:latest'
                 """
             }
         }
@@ -67,7 +67,7 @@ pipeline {
                     docker stop ept-dashboard|| true
                     docker rm ept-dashboard|| true
                     docker run -d \
-                        --name jk \
+                        --name ept-dashboard \
                         -p 3000:80 \
                         ${DOCKERHUB_USER}/ept-dashboard:latest
                 '
