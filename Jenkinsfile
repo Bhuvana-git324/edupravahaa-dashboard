@@ -7,6 +7,10 @@ pipeline {
         DOCKER_CREDS = credentials('DOCKER_HUB')
         EMAIL_TO = 'bhuvaneswari.k002@gmail.com'
         APP_EC2_IP = '54.183.131.143'
+
+        // 🔹 SonarQube Configuration
+        SONAR_HOST_URL = 'http://54.183.107.136:9000'
+        SONAR_SCANNER_HOME = tool 'SonarScanner'
     }
 
     stages {
@@ -26,6 +30,30 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh 'npm test -- --watchAll=false'
+            }
+        }
+
+        // 🔍 SONARQUBE SCAN STAGE
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh """
+                    ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                    -Dsonar.projectKey=ept-dashboard \
+                    -Dsonar.projectName=ept-dashboard \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=${SONAR_HOST_URL}
+                    """
+                }
+            }
+        }
+
+        // 🚦 QUALITY GATE (FAIL PIPELINE IF CODE IS BAD)
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
@@ -60,38 +88,34 @@ pipeline {
         }
 
         stage('Deploy on Application EC2') {
-    steps {
-        withCredentials([sshUserPrivateKey(
-            credentialsId: 'EC2_SSH_KEY',
-            keyFileVariable: 'SSH_KEY',
-            usernameVariable: 'SSH_USER'
-        )]) {
-            sh '''
-            ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@${APP_EC2_IP} << 'ENDSSH'
-            set -e  # Exit if any command fails
-            echo "Pulling latest Docker image..."
-            docker pull bhauvana/ept-dashboard:latest
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'EC2_SSH_KEY',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USER'
+                )]) {
+                    sh '''
+                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@${APP_EC2_IP} << 'ENDSSH'
+                    set -e
+                    echo "Pulling latest Docker image..."
+                    docker pull bhauvana/ept-dashboard:latest
 
-            if [ "$(docker ps -q -f name=ept-dashboard)" ]; then
-                echo "Stopping running container..."
-                docker stop ept-dashboard
-            fi
+                    if [ "$(docker ps -q -f name=ept-dashboard)" ]; then
+                        docker stop ept-dashboard
+                    fi
 
-            if [ "$(docker ps -aq -f name=ept-dashboard)" ]; then
-                echo "Removing old container..."
-                docker rm ept-dashboard
-            fi
+                    if [ "$(docker ps -aq -f name=ept-dashboard)" ]; then
+                        docker rm ept-dashboard
+                    fi
 
-            echo "Starting container..."
-            docker run -d --name ept-dashboard -p 3000:80 bhauvana/ept-dashboard:latest
-
-            echo "Deployment completed successfully."
-            
-            '''
+                    echo "Starting container..."
+                    docker run -d --name ept-dashboard -p 3000:80 bhauvana/ept-dashboard:latest
+                    echo "Deployment completed successfully."
+                    ENDSSH
+                    '''
+                }
+            }
         }
-    }
-}
-
     }
 
     post {
@@ -122,3 +146,4 @@ pipeline {
         }
     }
 }
+
