@@ -38,7 +38,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh """
-                    docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
+                    docker build -t ${DOCKERHUB_USER}/ept-dashboard:latest .
                 """
             }
         }
@@ -54,7 +54,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 sh """
-                    docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                    docker push ${DOCKERHUB_USER}/ept-dashboard:latest
                 """
             }
         }
@@ -96,7 +96,7 @@ pipeline {
     post {
         success {
             emailext(
-                to: "${EMAIL_TO}",
+                to: "kbhuvaneswari474@gmail.com",
                 subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
 <h2>Build Successful</h2>
@@ -109,7 +109,7 @@ pipeline {
  
         failure {
             emailext(
-                to: "${EMAIL_TO}",
+                to: "kbhuvanesewari474@gmail.com",
                 subject: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
 <h2>Build Failed</h2>
